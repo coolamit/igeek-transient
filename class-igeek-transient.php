@@ -14,6 +14,7 @@
  * @version 2013-04-07
  * @version 2013-04-20
  * @version 2013-05-27
+ * @version 2013-05-30
  */
 
 class iGeek_Transient {
@@ -66,6 +67,9 @@ class iGeek_Transient {
 			$this->_do_cache = true;
 		} else {
 			$this->_do_cache = false;
+
+			//delete any existing cache as well
+			$this->delete();
 		}
 
 		return $this;
@@ -131,11 +135,15 @@ class iGeek_Transient {
 		//lock this key to avoid race conditions
 		$this->_set_lock();
 
-		$data = call_user_func_array( $this->_callback, $this->_callback_args );
+		try {
+			$data = call_user_func_array( $this->_callback, $this->_callback_args );
 
-		if( $this->_do_cache === true ) {
-			//cache the data
-			set_transient( $this->_key, $data, $this->_life );
+			if( $this->_do_cache === true ) {
+				//cache the data
+				set_transient( $this->_key, $data, $this->_life );
+			}
+		} catch( Exception $e ) {
+			$data = false;
 		}
 
 		//release lock
